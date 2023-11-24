@@ -14,12 +14,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.17.0'
-      - name: test front
       - run: npm ci
         working-directory: ./front
       - run: npm test
         working-directory: ./front
-      - name: test back
       - run: npm ci
         working-directory: ./back
       - run: npm test
@@ -35,12 +33,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.17.0'
-      - name: build front
       - run: npm ci
         working-directory: ./front
       - run: npm run build --if-present
         working-directory: ./front
-      - name: build back
       - run: npm ci
         working-directory: ./back
       - run: npm run build --if-present
