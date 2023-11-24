@@ -1,0 +1,20 @@
+# Utilise une image Node.js en tant qu'image de base
+FROM node:18.17.0
+
+# Définit le répertoire de travail dans le conteneur
+WORKDIR /usr/src/app
+
+# Copie le package.json et le package-lock.json pour installer les dépendances
+COPY package*.json ./
+
+# Installe les dépendances
+RUN npm install
+
+# Copie tous les fichiers du projet dans le répertoire de travail du conteneur
+COPY . .
+
+# Expose le port 3000, utilisé par défaut par React
+EXPOSE 3001
+
+# Commande pour démarrer l'application React
+CMD ["node", "index.js"]
