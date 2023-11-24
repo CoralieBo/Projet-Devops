@@ -106,7 +106,7 @@ function stopDockerContainer(containerName) {
         childProcess.on('exit', async (code) => {
             if (code === 0) {
                 console.log(`Container arrêté avec succès: ${containerName}`);
-                await deleteDockerContainer(contener);
+                await deleteDockerContainer(containerName);
                 resolve();
             } else {
                 console.error(`Erreur lors de l'arrêt du container: ${containerName}`);
