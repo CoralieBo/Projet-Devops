@@ -17,6 +17,7 @@ app.get('/', (req, res) => {
 
 async function downloadDockerImage(contener, imageName, lastUpdate, port, containerName) {
     try {
+        console.log(`Vérification de la mise à jour de l'image ${imageName}`);
         const response = await axios.get(`https://hub.docker.com/v2/repositories/${imageName}/tags/`);
         const imageUpdate = response.data.results[0].last_updated;
         if (lastUpdate < imageUpdate || contener == null) {
@@ -113,10 +114,14 @@ function stopDockerContainer(containerName) {
 
 app.listen(port, () => {
     console.log(`Serveur en écoute sur le port ${port}`);
-    let lastUpdate = null;
+    let lastUpdateBack = null;
+    let lastUpdateFront = null;
     let backContener = null;
+    let frontContener = null;
     cron.schedule('* * * * *', () => {
-        [lastUpdate, backContener] = downloadDockerImage(backContener, "coralieboyer/back", lastUpdate, "3001:3001", "backend");
-        [lastUpdate, backContener] = downloadDockerImage(backContener, "coralieboyer/front", lastUpdate, "3000:3000", "frontend");
+        [lastUpdateBack, backContener] = downloadDockerImage(backContener, "coralieboyer/back", lastUpdateBack, "3001:3001", "backend");
+    });
+    cron.schedule('* * * * *', () => {
+        [lastUpdateFront, frontContener] = downloadDockerImage(frontContener, "coralieboyer/front", lastUpdateFront, "3000:3000", "frontend");
     });
 });
