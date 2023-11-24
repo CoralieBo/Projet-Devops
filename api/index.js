@@ -62,10 +62,9 @@ function pullDockerImage(contener, image, tag, port, containerName) {
 }
 
 function runDockerContainer(contener, image, port, containerName) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         if (contener !== null) {
-            stopDockerContainer(contener);
-            deleteDockerContainer(contener);
+            await stopDockerContainer(contener);
         }
         const command = `docker run --network project --name ${containerName} -p ${port} -d ${image}`;
         const childProcess = exec(command);
@@ -104,9 +103,10 @@ function stopDockerContainer(containerName) {
             console.error(data.toString());
         });
 
-        childProcess.on('exit', (code) => {
+        childProcess.on('exit', async (code) => {
             if (code === 0) {
                 console.log(`Container arrêté avec succès: ${containerName}`);
+                await deleteDockerContainer(contener);
                 resolve();
             } else {
                 console.error(`Erreur lors de l'arrêt du container: ${containerName}`);
@@ -149,10 +149,10 @@ app.listen(port, () => {
     let frontContener = null;
     const command = `docker network create project`;
     exec(command);
-    cron.schedule('* * * * *', async() => {
+    cron.schedule('* * * * *', async () => {
         [lastUpdateBack, backContener] = await downloadDockerImage(backContener, "coralieboyer/back", lastUpdateBack, "3001:3001", "backend");
     });
-    cron.schedule('* * * * *', async() => {
+    cron.schedule('* * * * *', async () => {
         [lastUpdateFront, frontContener] = await downloadDockerImage(frontContener, "coralieboyer/front", lastUpdateFront, "3000:3000", "frontend");
     });
 });
