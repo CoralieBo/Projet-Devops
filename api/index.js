@@ -25,6 +25,9 @@ async function downloadDockerImage(contener, imageName, lastUpdate, port, contai
             contener = await pullDockerImage(contener, imageName, tag, port, containerName);
 
             return [imageUpdate, contener];
+        } else {
+            console.log(`Pas de mise à jour de l'image ${imageName}`);
+            return [lastUpdate, contener];
         }
     } catch (error) {
         console.log(error);
@@ -40,9 +43,9 @@ function pullDockerImage(contener, image, tag, port, containerName) {
         //     console.log(data.toString());
         // });
 
-        // childProcess.stderr.on('data', (data) => {
-        //     console.error(data.toString());
-        // });
+        childProcess.stderr.on('data', (data) => {
+            console.error(data.toString());
+        });
 
         childProcess.on('exit', (code) => {
             if (code === 0) {
@@ -62,6 +65,7 @@ function runDockerContainer(contener, image, port, containerName) {
     return new Promise((resolve, reject) => {
         if (contener !== null) {
             stopDockerContainer(contener);
+            deleteDockerContainer(contener);
         }
         const command = `docker run --network project --name ${containerName} -p ${port} -d ${image}`;
         const childProcess = exec(command);
@@ -71,9 +75,9 @@ function runDockerContainer(contener, image, port, containerName) {
             contener = data.toString();
         });
 
-        // childProcess.stderr.on('data', (data) => {
-        //     console.error(data.toString());
-        // });
+        childProcess.stderr.on('data', (data) => {
+            console.error(data.toString());
+        });
 
         childProcess.on('exit', (code) => {
             if (code === 0) {
@@ -89,16 +93,16 @@ function runDockerContainer(contener, image, port, containerName) {
 
 function stopDockerContainer(containerName) {
     return new Promise((resolve, reject) => {
-        const command = `docker stop ${containerName}`;
-        const childProcess = exec(command);
+        const stopCommand = `docker stop ${containerName}`;
+        const childProcess = exec(stopCommand);
 
         // childProcess.stdout.on('data', (data) => {
         //     console.log(data.toString());
         // });
 
-        // childProcess.stderr.on('data', (data) => {
-        //     console.error(data.toString());
-        // });
+        childProcess.stderr.on('data', (data) => {
+            console.error(data.toString());
+        });
 
         childProcess.on('exit', (code) => {
             if (code === 0) {
@@ -112,16 +116,43 @@ function stopDockerContainer(containerName) {
     });
 }
 
+function deleteDockerContainer(containerName) {
+    return new Promise((resolve, reject) => {
+        const deleteCommand = `docker rm ${containerName}`;
+        const childProcess = exec(deleteCommand);
+
+        // childProcess.stdout.on('data', (data) => {
+        //     console.log(data.toString());
+        // });
+
+        childProcess.stderr.on('data', (data) => {
+            console.error(data.toString());
+        });
+
+        childProcess.on('exit', (code) => {
+            if (code === 0) {
+                console.log(`Container supprimé avec succès: ${containerName}`);
+                resolve();
+            } else {
+                console.error(`Erreur lors de la suppression du container: ${containerName}`);
+                reject();
+            }
+        });
+    });
+}
+
 app.listen(port, () => {
     console.log(`Serveur en écoute sur le port ${port}`);
     let lastUpdateBack = null;
     let lastUpdateFront = null;
     let backContener = null;
     let frontContener = null;
-    cron.schedule('* * * * *', () => {
-        [lastUpdateBack, backContener] = downloadDockerImage(backContener, "coralieboyer/back", lastUpdateBack, "3001:3001", "backend");
+    const command = `docker network create project`;
+    exec(command);
+    cron.schedule('* * * * *', async() => {
+        [lastUpdateBack, backContener] = await downloadDockerImage(backContener, "coralieboyer/back", lastUpdateBack, "3001:3001", "backend");
     });
-    cron.schedule('* * * * *', () => {
-        [lastUpdateFront, frontContener] = downloadDockerImage(frontContener, "coralieboyer/front", lastUpdateFront, "3000:3000", "frontend");
+    cron.schedule('* * * * *', async() => {
+        [lastUpdateFront, frontContener] = await downloadDockerImage(frontContener, "coralieboyer/front", lastUpdateFront, "3000:3000", "frontend");
     });
 });
